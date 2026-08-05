@@ -3,6 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import SuccessMessage from '../components/SuccessMessage.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { getApplications } from '../services/applicationsApi.js'
+import {
+  buildApplicationListSearch,
+  getApplicationListControlsFromSearch,
+} from '../utils/applicationListQuery.js'
 import { formatDate } from '../utils/formatDate.js'
 import {
   getVisibleApplications,
@@ -285,10 +289,9 @@ function ApplicationsPage() {
   )
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [sortBy, setSortBy] = useState('newest')
   const [reloadKey, setReloadKey] = useState(0)
+  const { searchQuery, sortBy, statusFilter } =
+    getApplicationListControlsFromSearch(location.search)
 
   const visibleApplications = getVisibleApplications({
     applications,
@@ -301,6 +304,26 @@ function ApplicationsPage() {
     searchQuery.trim() !== '' ||
     statusFilter !== 'All' ||
     sortBy !== 'newest'
+
+  function updateListControls(nextControls, options = {}) {
+    const nextSearch = buildApplicationListSearch(location.search, {
+      searchQuery,
+      sortBy,
+      statusFilter,
+      ...nextControls,
+    })
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch,
+        hash: location.hash,
+      },
+      {
+        replace: Boolean(options.replace),
+      },
+    )
+  }
 
   useEffect(() => {
     const message = getSuccessMessageFromState(location.state)
@@ -372,9 +395,11 @@ function ApplicationsPage() {
   }
 
   function handleResetControls() {
-    setSearchQuery('')
-    setStatusFilter('All')
-    setSortBy('newest')
+    updateListControls({
+      searchQuery: '',
+      statusFilter: 'All',
+      sortBy: 'newest',
+    })
   }
 
   let listSummary =
@@ -450,10 +475,17 @@ function ApplicationsPage() {
           <ApplicationControls
             hasActiveControls={hasActiveControls}
             onReset={handleResetControls}
-            onSearchChange={(event) => setSearchQuery(event.target.value)}
-            onSortChange={(event) => setSortBy(event.target.value)}
+            onSearchChange={(event) =>
+              updateListControls(
+                { searchQuery: event.target.value },
+                { replace: true },
+              )
+            }
+            onSortChange={(event) =>
+              updateListControls({ sortBy: event.target.value })
+            }
             onStatusFilterChange={(event) =>
-              setStatusFilter(event.target.value)
+              updateListControls({ statusFilter: event.target.value })
             }
             searchQuery={searchQuery}
             sortBy={sortBy}
