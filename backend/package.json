@@ -1,0 +1,16 @@
+{
+  "name": "job-tracker-backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "db:check": "node scripts/check-db.js",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "pg": "^8.13.3"
+  }
+}

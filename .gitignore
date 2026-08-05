@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Build and test output
+dist/
+coverage/
+.vite/
+
+# Logs and temporary files
+*.log
+logs/
+*.pid
+*.tmp
+*.temp
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local project notes
+.internal/
