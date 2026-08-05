@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import SuccessMessage from '../components/SuccessMessage.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import {
   deleteApplication,
   getApplicationById,
 } from '../services/applicationsApi.js'
 import { formatDate, formatDateTime } from '../utils/formatDate.js'
+import {
+  getDeleteSuccessNavigation,
+  getNextVisibleSuccessMessage,
+  getSuccessMessageFromState,
+  removeSuccessMessageFromState,
+} from '../utils/successNavigation.js'
 
 function BackToApplicationsLink() {
   return (
@@ -317,8 +324,12 @@ function ApplicationDetails({
 
 function ApplicationDetailsPage() {
   const { id } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const [application, setApplication] = useState(null)
+  const [successMessage, setSuccessMessage] = useState(() =>
+    getSuccessMessageFromState(location.state),
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [notFound, setNotFound] = useState(false)
@@ -326,6 +337,39 @@ function ApplicationDetailsPage() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
+
+  useEffect(() => {
+    const message = getSuccessMessageFromState(location.state)
+
+    if (!message) {
+      return
+    }
+
+    // The message is one-time history state. Copy it into local UI state
+    // before replacing that history state so the banner remains visible.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSuccessMessage((currentMessage) =>
+      getNextVisibleSuccessMessage(currentMessage, location.state),
+    )
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: removeSuccessMessageFromState(location.state),
+      },
+    )
+  }, [
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ])
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -390,13 +434,14 @@ function ApplicationDetailsPage() {
 
     try {
       const wasDeleted = await deleteApplication(id)
+      const successNavigation = getDeleteSuccessNavigation(wasDeleted)
 
-      if (!wasDeleted) {
+      if (!successNavigation) {
         setDeleteError('Could not delete this application. It was not found.')
         return
       }
 
-      navigate('/applications')
+      navigate(successNavigation.to, successNavigation.options)
     } catch {
       setDeleteError('Could not delete this application. Please try again.')
     } finally {
@@ -407,6 +452,12 @@ function ApplicationDetailsPage() {
   return (
     <>
       <BackToApplicationsLink />
+
+      <SuccessMessage
+        key={successMessage || 'empty-success-message'}
+        message={successMessage}
+        onDismiss={() => setSuccessMessage(null)}
+      />
 
       {isLoading && <LoadingState />}
 

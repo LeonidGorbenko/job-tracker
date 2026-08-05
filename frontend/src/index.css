@@ -26,3 +26,15 @@ body {
   width: 100%;
   min-height: 100vh;
 }
+
+@keyframes success-message-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

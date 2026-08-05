@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import ApplicationForm from '../components/ApplicationForm.jsx'
 import { createApplication } from '../services/applicationsApi.js'
+import { getCreateSuccessNavigation } from '../utils/successNavigation.js'
 import { validateApplication } from '../utils/validateApplication.js'
 
 const initialFormValues = {
@@ -50,8 +51,14 @@ function NewApplicationPage() {
 
     try {
       const createdApplication = await createApplication(formValues)
+      const successNavigation = getCreateSuccessNavigation(createdApplication)
 
-      navigate('/applications/' + createdApplication.id)
+      if (!successNavigation) {
+        setSubmitError('Could not save the application. Please try again.')
+        return
+      }
+
+      navigate(successNavigation.to, successNavigation.options)
     } catch (error) {
       if (error?.errors) {
         setErrors(error.errors)
