@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
+import SuccessMessage from '../components/SuccessMessage.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { getApplications } from '../services/applicationsApi.js'
 import { formatDate } from '../utils/formatDate.js'
@@ -8,6 +9,11 @@ import {
   sortOptions,
   statusFilterOptions,
 } from '../utils/getVisibleApplications.js'
+import {
+  getNextVisibleSuccessMessage,
+  getSuccessMessageFromState,
+  removeSuccessMessageFromState,
+} from '../utils/successNavigation.js'
 
 function LoadingState() {
   return (
@@ -271,7 +277,12 @@ function ApplicationList({ applications }) {
 }
 
 function ApplicationsPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [applications, setApplications] = useState([])
+  const [successMessage, setSuccessMessage] = useState(() =>
+    getSuccessMessageFromState(location.state),
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -290,6 +301,39 @@ function ApplicationsPage() {
     searchQuery.trim() !== '' ||
     statusFilter !== 'All' ||
     sortBy !== 'newest'
+
+  useEffect(() => {
+    const message = getSuccessMessageFromState(location.state)
+
+    if (!message) {
+      return
+    }
+
+    // The message is one-time history state. Copy it into local UI state
+    // before replacing that history state so the banner remains visible.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSuccessMessage((currentMessage) =>
+      getNextVisibleSuccessMessage(currentMessage, location.state),
+    )
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: location.hash,
+      },
+      {
+        replace: true,
+        state: removeSuccessMessageFromState(location.state),
+      },
+    )
+  }, [
+    location.hash,
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+  ])
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -366,6 +410,12 @@ function ApplicationsPage() {
           New application
         </Link>
       </header>
+
+      <SuccessMessage
+        key={successMessage || 'empty-success-message'}
+        message={successMessage}
+        onDismiss={() => setSuccessMessage(null)}
+      />
 
       <section
         className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"

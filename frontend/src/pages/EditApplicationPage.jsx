@@ -5,6 +5,7 @@ import {
   getApplicationById,
   updateApplication,
 } from '../services/applicationsApi.js'
+import { getEditSuccessNavigation } from '../utils/successNavigation.js'
 import { validateApplication } from '../utils/validateApplication.js'
 
 const emptyFormValues = {
@@ -226,13 +227,14 @@ function EditApplicationPage() {
 
     try {
       const updatedApplication = await updateApplication(id, formValues)
+      const successNavigation = getEditSuccessNavigation(updatedApplication)
 
-      if (!updatedApplication) {
+      if (!successNavigation) {
         setSubmitError('Could not save this application. Please try again.')
         return
       }
 
-      navigate('/applications/' + updatedApplication.id)
+      navigate(successNavigation.to, successNavigation.options)
     } catch (error) {
       if (error?.errors) {
         setErrors(error.errors)
