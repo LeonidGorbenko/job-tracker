@@ -1,5 +1,7 @@
 # Job Application Tracker
 
+[![CI](https://github.com/LeonidGorbenko/job-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/LeonidGorbenko/job-tracker/actions/workflows/ci.yml)
+
 A full-stack web application for managing job applications throughout the hiring process.
 
 The application allows users to create, review, update, search, filter, sort, and delete job applications. It was built as a practical business-oriented project using React, Express, and PostgreSQL.
